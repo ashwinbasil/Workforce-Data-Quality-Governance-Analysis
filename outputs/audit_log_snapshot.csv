@@ -1,0 +1,11 @@
+check_name,failed_rows,check_timestamp
+missing_email,257,2026-01-09 14:12:57
+missing_phone,468,2026-01-09 14:12:57
+duplicate_email,43,2026-01-09 14:12:57
+invalid_email_format,0,2026-01-09 14:12:57
+last_active_before_signup,0,2026-01-09 14:12:57
+missing_email,257,2026-01-09 14:31:44
+missing_phone,468,2026-01-09 14:31:44
+duplicate_email,43,2026-01-09 14:31:44
+invalid_email_format,0,2026-01-09 14:31:44
+last_active_before_signup,0,2026-01-09 14:31:44
