@@ -1,115 +1,186 @@
-# Customer Data Quality & Governance Project
+# Workforce Data Quality & Governance Analysis  
+**UK Government Workforce Dataset**
 
-A full-stack, portfolio-ready project demonstrating **data governance, SQL analytics, Python automation, BI integration, and historical monitoring** on a synthetic customer dataset.  
+## Overview
 
-This project is designed for **data analyst, data engineer, or BI-focused roles** to showcase advanced SQL, Python, and dashboarding skills.
+This project demonstrates an **end-to-end data quality and governance workflow** using a real UK government workforce dataset.
 
----
+The goal is not to build models or flashy dashboards, but to show how a data analyst or data engineer:
+- defines data expectations,
+- detects quality violations using SQL,
+- logs issues over time,
+- evaluates them against SLAs,
+- and translates findings into governance actions.
 
-## Project Overview
-
-The project is organized into **4 phases**:
-
-1. **Data Governance Foundations**  
-   - Defined in [data_contract.md](src/data_contract.md)  
-   - Establishes rules, standards, and assumptions for customer data quality.  
-
-2. **Automated Data Quality Checks (SQL + Python)**  
-   - Missing values, duplicate detection, invalid formats, temporal consistency  
-   - Audit logs stored in `dq_audit_log`  
-
-3. **Interactive Governance Dashboard (Streamlit)**  
-   - Visualizes SLA violations, failed percentages, and audit summaries  
-   - Optional filtering by country or rule  
-
-4. **Historical Logging & BI Integration**  
-   - Maintains historical data quality results in `dq_audit_log_historical`  
-   - Exports CSV for Power BI / Tableau  
-   - Supports trend visualization and SLA compliance over time  
+All Python and SQL code in this repository is **public, reviewable, and reproducible**.
 
 ---
 
-## Tech Stack
+## Dataset
 
-- **SQL**: Advanced queries for governance and quality checks  
-- **Python**: Automation, logging, CSV exports, plotting  
-- **Streamlit**: Interactive dashboard  
-- **Matplotlib / Seaborn**: Visualizations  
-- **SQLite**: Lightweight relational database for logs  
-- **BI Tools**: Power BI / Tableau (via CSV export)  
+**Source:** UK Government workforce transparency data  
+**Type:** Real public-sector dataset  
+**Rows:** ~3,000  
+**Characteristics:** Missing fields, inconsistent pay ranges, implausible values
+
+Key columns include:
+- Parent Department
+- Organisation
+- Grade
+- Generic Job Title
+- Payscale Minimum (£)
+- Payscale Maximum (£)
+- Number of Posts (FTE)
+- Office Region
 
 ---
 
-## Repository Structure
+## Repository Structure (All Code Public)
 
 ```text
 customer-data-quality/
-├── data/
-│   ├── raw/                 # Generated synthetic datasets
-│   └── processed/           # Cleaned datasets & CSV outputs
-├── outputs/                 # Plots and screenshots for portfolio
+│
+├── contracts/
+│   └── workforce_data_contract.md
+│
+├── sql/
+│   ├── dq_workforce_checks.sql
+│   └── dq_sla_rules.sql
+│
 ├── src/
-│   ├── generate_data.py     # Phase 0: Synthetic dataset generator
-│   ├── check_data.py        # Quick checks & missing value exploration
-│   ├── sql_profiling.py     # Advanced SQL profiling
-│   ├── advanced_sql_dashboard.py  # Phase 3 alternative dashboard
-│   ├── dashboard_interactive.py   # Phase 3 Streamlit dashboard
-│   ├── dq_thresholds.py     # SLA thresholds
-│   ├── create_audit_table.sql
-│   ├── create_historical_audit_table.sql
-│   ├── data_quality_checks.sql
-│   ├── run_data_quality_checks.py
-│   ├── run_data_quality_historical.py
-│   └── data_contract.md     # Phase 1 governance document
-├── main.py                  # Orchestrates all phases
-├── requirements.txt
+│   ├── run_workforce_dq.py
+│   └── generate_portfolio_outputs.py
+│
+├── data/
+│   ├── raw/
+│   └── processed/
+│       ├── workforce.db
+│       ├── dq_audit_log.csv
+│       └── dq_sla_evaluation.csv
+│
+├── outputs/
+│   ├── audit_log_snapshot.png
+│   ├── sla_bar_chart.png
+│   ├── historical_trend.png
+│   └── dashboard_portfolio.html
+│
 └── README.md
+
 ```
 ---
 
-## Getting Started
+## Data Governance Foundation
 
-- Install Dependencies 
+Before running any checks, a formal data contract defines expectations for the dataset.
 
-    pip install -r requirements.txt
+File: contracts/workforce_data_contract.md
 
-- Ensure Streamlit is installed
+The contract specifies:
 
-   pip install streamlit
+- Mandatory fields
 
-- Run the pipeline
-   
-   python main.py
+- Valid numeric ranges
 
-This executes:
+- Semantic rules (for example, senior roles should not map to implausibly low pay bands)
 
-- Data generation
-
-- Data quality checks
-
-- Historical logging & CSV export
-
-Outputs:
-
-- Audit logs: dq_audit_log, dq_audit_log_historical
-
-- CSV for BI: data/processed/dq_audit_log_historical.csv
-
-- Plots: outputs/
-
-Launch Interactive Dashboard (Phase 3)
-  
-  streamlit run src/dashboard_interactive.py
-
-View SLA violations and failed percentages
-
-Optional: filter by rule or country
-
-Historical trends can be displayed from dq_audit_log_historical.csv
+- Governance assumptions and ownership
 
 ---
 
-## Sample Output
+## End-to-End Walkthrough
+
+Problem
+
+Government workforce data is used for:
+
+- headcount reporting,
+
+- cost analysis,
+
+- policy decisions,
+
+- audit transparency.
+
+If grades, FTE counts, or pay bands are incorrect, reporting becomes misleading and potentially non-compliant.
+
+---
+
+## Investigation
+
+Data quality checks are implemented in SQL:
+
+ sql/dq_workforce_checks.sql
+
+Checks include:
+
+- Missing organisational hierarchy fields
+
+- Missing grades or job titles
+
+- Negative or unrealistic FTE values
+
+- Payscale minimum greater than maximum
+
+- Senior roles associated with implausibly low pay bands
+
+Each check logs:
+
+- check name
+
+- number of failing rows
+
+- execution timestamp
+
+Results are appended to an audit log rather than overwritten.
+
+---
+
+## Findings 
+
+| Issue                              | Failed Rows | Why It Matters                              |
+|-----------------------------------|-------------|---------------------------------------------|
+| Senior roles with low pay bands   | 14          | Distorts workforce cost reporting           |
+| Negative FTE values               | 3           | Breaks headcount calculations               |
+| Payscale min > max                | 2           | Invalid compensation data                   |
+| Missing grades / job titles       | 0           | Controlled after validation                 |
+| Missing organisational fields     | 0           | Controlled after validation                 |
+
+
+These issues persist across multiple executions, indicating structural rather than one-off problems.
+
+---
+
+## SLA Evaluation
+
+Each rule is evaluated against defined thresholds in:
+
+ sql/dq_sla_rules.sql
+
+Output:
+
+ data/processed/dq_sla_evaluation.csv
+
+This converts raw errors into governance-level signals (PASS / FAIL by severity).
+
+---
+
+## Resolution (What Would Happen Next)
+
+If this were a real organisation, the next steps would include:
+
+- Blocking ingestion of records with negative or implausible FTE values
+
+- Enforcing pay band validation for senior grades at source systems
+
+- Assigning departmental data owners for remediation
+
+- Requiring documented sign-off for overrides
+
+- Monitoring SLA breaches over time rather than fixing one-off errors
+
+---
+
+##  Outputs & Evidence
 
 ### Audit Log Snapshot
 ![Audit Log](outputs/audit_log_snapshot.png)
@@ -120,35 +191,45 @@ Historical trends can be displayed from dq_audit_log_historical.csv
 ### Historical Trend
 ![Trend Plot](outputs/historical_trend.png)
 
-### Streamlit Dashboard
+### Dashboard
 ![Dashboard](outputs/dashboard_portfolio.html)
 
 ---
 
-## Project Highlights
+## How to Run
 
-**Advanced SQL**: Multiple checks, duplicates, temporal consistency, percentage calculations
+ pip install pandas matplotlib seaborn
+ 
+ python src/run_workforce_dq.py
+ 
+ python src/generate_portfolio_outputs.py
 
-**Python Automation**: End-to-end pipeline orchestrated via main.py
+---
 
-**Data Governance**: Formal data contract, SLA enforcement, traceable audit logs
+## Skills Demonstrated
 
-**BI-Ready Outputs**: Historical CSV for Power BI / Tableau dashboards
+- SQL data quality checks with business logic
 
-**Portfolio**-Ready: Screenshots, clean repo, reproducible steps
+- Data governance and data contracts
+
+- Audit logging and SLA enforcement
+
+- Analytical interpretation of real public-sector data
+
+- Python-based reporting and visualisation
+
+- BI-ready outputs for downstream tools
 
 ---
 
 ## Limitations
 
-- Synthetic dataset only
+- SQLite used for simplicity
 
-- Single-table analysis (customers)
+- Single dataset
 
-- No real-time streaming data
+- No CI/CD
 
-- SLA thresholds are configurable but simplistic
-
-This project is meant for educational and portfolio purposes.
+- No automated remediation workflows
 
 
