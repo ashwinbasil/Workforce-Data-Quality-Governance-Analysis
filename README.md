@@ -152,6 +152,63 @@ All findings below are automatically derived from the most recent data quality e
 
 ---
 
+## Impact Assessment (Latest Run)
+
+The following issues were evaluated not only by volume, but by
+their effect on reporting accuracy, compliance, and decision-making.
+
+| Issue | Failed Rows | Impact Category | Governance Risk |
+|-----|------------|----------------|----------------|
+| Senior roles with low pay bands | 609 | Financial reporting | Understates senior workforce costs, misleading budget forecasts |
+| Unrealistic FTE values | 3,191 | Headcount & planning | Invalidates workforce capacity and staffing metrics |
+| Payscale min > max | 3,191 | Payroll integrity | Produces logically invalid compensation records |
+
+---
+
+### Priority Classification
+
+Based on impact and downstream risk:
+
+- **Critical**: Invalid FTE values, pay scale inversions  
+  These break statutory reporting and financial controls.
+
+- **High**: Senior role pay inconsistencies  
+  These distort cost analysis and may indicate governance breaches.
+
+- **Controlled**: Missing grades, job titles, organisational fields  
+  These are currently mitigated by validation rules and did not breach SLAs.
+---
+## Recommended Remediation Actions
+
+If deployed in a real organisation, the following actions would be taken:
+
+### 1. Source-Level Controls
+- Enforce FTE bounds (0 to 1.5) in source HR systems
+- Block ingestion of records with inverted pay scales
+
+### 2. Governance Controls
+- Require department-level sign-off for senior role pay bands
+- Assign data ownership for Parent Department and Organisation fields
+
+### 3. Monitoring & Escalation
+- Treat repeated SLA breaches as governance incidents
+- Escalate unresolved failures to data governance council
+- Track trends over time instead of one-off corrections
+
+---
+## Ownership Model
+
+| Issue Type | Primary Owner | Secondary Owner |
+|---------|---------------|----------------|
+| FTE validity | HR Systems | Workforce Analytics |
+| Pay scale integrity | Finance | Data Governance |
+| Organisational hierarchy | Department Admin | Central Data Team |
+
+This project treats data quality failures as governance decisions,
+not technical inconveniences.
+
+---
+
 ## Deep Dive: Unrealistic FTE Values
 
 ### Detection Logic
