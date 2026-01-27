@@ -1,49 +1,32 @@
--- Exploratory analysis of workforce data quality failures
--- This file supports root cause analysis and remediation prioritisation
+-- Exploratory Analysis: Root Cause Investigation
+-- These queries are used to understand WHY checks failed,
+-- not just that they failed.
 
--- 1. Departments driving unrealistic FTE values
-WITH invalid_fte AS (
-    SELECT
-        parent_department,
-        organisation,
-        fte
-    FROM workforce
-    WHERE fte < 0 OR fte > 1.5
-)
+-- 1. Departments contributing most to invalid FTE values
 SELECT
     parent_department,
-    COUNT(*) AS invalid_records,
-    ROUND(
-        100.0 * COUNT(*) / (SELECT COUNT(*) FROM workforce),
-        2
-    ) AS pct_of_total_workforce
-FROM invalid_fte
-GROUP BY parent_department
-ORDER BY invalid_records DESC;
-
--- 2. Senior roles mapped to implausibly low pay bands
-SELECT
-    grade,
-    generic_job_title,
-    payscale_min,
-    payscale_max,
-    COUNT(*) AS affected_rows
+    COUNT(*) AS invalid_fte_rows
 FROM workforce
-WHERE
-    grade LIKE '%Senior%'
-    AND payscale_max < 40000
-GROUP BY
+WHERE fte < 0 OR fte > 1.5
+GROUP BY parent_department
+ORDER BY invalid_fte_rows DESC;
+
+-- 2. Senior roles with lowest maximum pay
+SELECT
     grade,
     generic_job_title,
     payscale_min,
     payscale_max
-ORDER BY affected_rows DESC;
+FROM workforce
+WHERE grade LIKE '%Senior%'
+  AND payscale_max < 40000
+ORDER BY payscale_max ASC;
 
--- 3. Organisations with inverted pay scales (min > max)
+-- 3. Pay scale inversions by organisation
 SELECT
     organisation,
-    COUNT(*) AS inverted_payscale_rows
+    COUNT(*) AS invalid_pay_rows
 FROM workforce
 WHERE payscale_min > payscale_max
 GROUP BY organisation
-ORDER BY inverted_payscale_rows DESC;
+ORDER BY invalid_pay_rows DESC;
