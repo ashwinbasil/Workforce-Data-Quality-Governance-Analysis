@@ -11,6 +11,18 @@ All SQL and Python code in this repository is public, versioned, and fully repro
 
 ---
 
+## Where to See My SQL Work
+
+All data quality and governance logic is implemented in SQL:
+
+- `sql/dq_workforce_checks.sql` — production-style data quality rules
+- `sql/dq_sla_rules.sql` — SLA thresholds and governance logic
+- `sql/exploratory_analysis.sql` — root-cause analysis queries
+
+Python is used strictly for orchestration, logging, and visualisation.
+
+---
+
 ## Dataset
 
 Source: UK Government workforce transparency data (public)
@@ -35,7 +47,7 @@ Key fields:
 
 ---
 
-## Repository Structure (All Code Public)
+## Repository Structure 
 
 ```text
 Workforce-Data-Quality-Governance-Analysis/
@@ -144,14 +156,14 @@ All findings below are automatically derived from the most recent data quality e
 
 ### Detection Logic
 
-```
-## End-to-End Walkthrough: Unrealistic FTE Values
 
-### Problem
+End-to-End Walkthrough: Unrealistic FTE Values
+
+ Problem
 FTE values are used directly for workforce headcount, budgeting, and capacity planning.
 Values outside realistic bounds invalidate downstream metrics and policy decisions.
 
-### Investigation
+ Investigation
 An automated SQL rule flagged FTE values less than 0 or greater than 1.5:
 
 ```sql
@@ -162,8 +174,8 @@ FROM workforce
 WHERE fte < 0 OR fte > 1.5
 GROUP BY parent_department
 ORDER BY invalid_rows DESC;
-
 ```
+
 This revealed that invalid FTE values were concentrated in a small number of departments,
 suggesting upstream system or data entry issues rather than random noise
 
