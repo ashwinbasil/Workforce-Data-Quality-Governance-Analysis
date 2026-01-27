@@ -1,0 +1,4 @@
+*.sql linguist-detectable=true
+*.sql linguist-language=SQL
+*.py linguist-vendored=false
+*.html linguist-vendored=true
