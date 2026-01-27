@@ -1,0 +1,11 @@
+check_name,failed_rows,max_failed_rows,severity,sla_status,check_timestamp
+missing_organisation,0,0,CRITICAL,PASS,2026-01-10T14:20:57.237185+00:00
+invalid_fte_negative,0,0,CRITICAL,PASS,2026-01-10T14:20:57.237185+00:00
+missing_parent_department,0,0,CRITICAL,PASS,2026-01-10T14:20:57.237185+00:00
+missing_payscale,0,10,HIGH,PASS,2026-01-10T14:20:57.237185+00:00
+missing_job_title,0,0,HIGH,PASS,2026-01-10T14:20:57.237185+00:00
+missing_grade,0,0,HIGH,PASS,2026-01-10T14:20:57.237185+00:00
+senior_role_low_pay,609,2,MEDIUM,FAIL,2026-01-10T14:20:57.237185+00:00
+missing_office_region,0,0,MEDIUM,PASS,2026-01-10T14:20:57.237185+00:00
+invalid_fte_unrealistic,3191,5,HIGH,FAIL,2026-01-27T14:44:18.903323+00:00
+payscale_min_greater_than_max,3191,0,CRITICAL,FAIL,2026-01-27T14:44:18.903323+00:00

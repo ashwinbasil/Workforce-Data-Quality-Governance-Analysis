@@ -124,16 +124,19 @@ Failures are logged historically rather than overwritten, enabling trend analysi
 
 ---
 
-## Findings (Latest Run)
+## Findings 
 
-| Issue | Failed Rows | Why It Matters |
-|-----|------------|----------------|
-| Senior roles with low pay bands | 609 | Understates workforce cost and risks non-compliant compensation reporting |
-| Unrealistic FTE values | 3,191 | Invalidates headcount metrics and workforce planning outputs |
-| Payscale minimum greater than maximum | 3,191 | Corrupts payroll logic and compensation analysis |
-| Missing grades | 0 | Controlled through upstream validation |
-| Missing job titles | 0 | Controlled through upstream validation |
-| Missing organisational fields | 0 | Controlled through upstream validation |
+All findings below are automatically derived from the most recent data quality execution
+(`data/processed/dq_latest_findings.csv`).
+
+| Issue | Failed Rows | % of Dataset | SLA Status | Why It Matters |
+|------|------------|-------------|------------|---------------|
+| Senior roles with low pay bands | 609 | ~20% | FAIL | Understates workforce cost and risks non-compliant compensation for senior positions |
+| Unrealistic FTE values | 3,191 | ~100% | FAIL | Breaks headcount calculations and invalidates workforce planning metrics |
+| Payscale minimum greater than maximum | 3,191 | ~100% | FAIL | Produces invalid payroll records and corrupts compensation analysis |
+| Missing grades | 0 | 0% | PASS | Controlled through validation rules |
+| Missing job titles | 0 | 0% | PASS | Controlled through validation rules |
+| Missing organisational fields | 0 | 0% | PASS | Controlled through validation rules |
 
 ---
 
@@ -141,16 +144,29 @@ Failures are logged historically rather than overwritten, enabling trend analysi
 
 ### Detection Logic
 
+```
+## End-to-End Walkthrough: Unrealistic FTE Values
+
+### Problem
+FTE values are used directly for workforce headcount, budgeting, and capacity planning.
+Values outside realistic bounds invalidate downstream metrics and policy decisions.
+
+### Investigation
+An automated SQL rule flagged FTE values less than 0 or greater than 1.5:
+
 ```sql
-INSERT INTO dq_audit_log (check_name, failed_rows, check_timestamp)
 SELECT
-    'invalid_fte_unrealistic',
-    COUNT(*),
-    CURRENT_TIMESTAMP
+    parent_department,
+    COUNT(*) AS invalid_rows
 FROM workforce
-WHERE fte < 0 OR fte > 1.5;
+WHERE fte < 0 OR fte > 1.5
+GROUP BY parent_department
+ORDER BY invalid_rows DESC;
 
 ```
+This revealed that invalid FTE values were concentrated in a small number of departments,
+suggesting upstream system or data entry issues rather than random noise
+
 ---
 Impact
 
