@@ -1,41 +1,84 @@
 # Workforce Data Quality & Governance Analysis
-UK Government Workforce Dataset
+**UK Government Workforce Dataset**
 
 ## Overview
 
-This project demonstrates an end-to-end data quality and governance workflow using a real UK government workforce dataset.
+This repository demonstrates a **SQL-first, end-to-end data quality and governance workflow** using a real UK government workforce dataset.
 
-The objective is not predictive modelling or dashboard aesthetics. The focus is on how a data analyst or analytics engineer designs enforceable data quality rules, detects violations using SQL, tracks them over time, evaluates them against SLAs, and translates findings into concrete governance actions.
+The objective is not predictive modelling or dashboard aesthetics.  
+The focus is on how an analyst or analytics engineer:
 
-All SQL and Python code in this repository is public, versioned, and fully reproducible.
+- defines enforceable data expectations,
+- detects violations using SQL,
+- logs failures over time,
+- evaluates them against SLAs,
+- and translates findings into concrete governance actions.
+
+All SQL and Python code is **public, versioned, and reproducible**.
 
 ---
 
-## Where to See My SQL Work
+## SQL-First Architecture (Deliberate Design Choice)
 
-All data quality and governance logic is implemented in SQL:
+All data quality logic is implemented in **SQL**, not Python.
 
-- `sql/dq_workforce_checks.sql` — production-style data quality rules
-- `sql/dq_sla_rules.sql` — SLA thresholds and governance logic
-- `sql/exploratory_analysis.sql` — root-cause analysis queries
+Python is used strictly to:
+- orchestrate execution,
+- load SLA thresholds,
+- persist audit results,
+- export BI-ready outputs.
 
-Python is used strictly for orchestration, logging, and visualisation.
+This mirrors real enterprise environments where:
+- data quality rules live close to the data,
+- SQL logic is auditable and reviewable by governance teams,
+- Python acts as a control layer, not a logic layer.
+
+---
+
+## SQL Techniques Demonstrated
+
+The SQL in this repository goes beyond row-level checks and focuses on **analytical governance patterns**:
+
+- Common Table Expressions (CTEs) for modular, auditable rules
+- Conditional aggregation for failure metrics
+- Cross-field validation (payscale minimum vs maximum)
+- Semantic business rules (grade-to-pay alignment)
+- Department-level concentration analysis
+- Severity classification aligned to governance escalation
+- Time-stamped audit logging for trend analysis
+
+---
+
+## Where to Review SQL Work
+
+All data quality and governance logic lives in the `sql/` directory:
+
+- `sql/dq_workforce_checks.sql`  
+  Production-style data quality rules with persistent audit logging
+
+- `sql/dq_sla_rules.sql`  
+  SLA thresholds and severity mapping
+
+- `sql/exploratory_analysis.sql`  
+  Root-cause and impact analysis queries used to understand failure patterns
+
+Python does **not** embed business logic.
 
 ---
 
 ## Dataset
 
-Source: UK Government workforce transparency data (public)
-Rows: ~3,000
-Domain: Public-sector workforce reporting
+**Source:** UK Government workforce transparency data (public)  
+**Rows:** ~3,000  
+**Domain:** Public-sector workforce reporting
 
-Common data quality risks in the dataset include:
+Common data quality risks present in the dataset:
 - Missing organisational hierarchy
 - Implausible Full-Time Equivalent (FTE) values
 - Invalid pay ranges
 - Structural inconsistencies across grades and roles
 
-Key fields:
+Key fields include:
 - Parent Department
 - Organisation
 - Grade
@@ -47,36 +90,39 @@ Key fields:
 
 ---
 
-## Repository Structure 
+## Repository Structure
 
 ```text
 Workforce-Data-Quality-Governance-Analysis/
 │
 ├── contracts/
-│ └── workforce_data_contract.md
+│   └── workforce_data_contract.md
 │
 ├── sql/
-│ ├── dq_workforce_checks.sql
-│ └── dq_sla_rules.sql
+│   ├── dq_workforce_checks.sql
+│   ├── dq_sla_rules.sql
+│   └── exploratory_analysis.sql
 │
 ├── src/
-│ ├── run_workforce_dq.py
-│ └── generate_portfolio_outputs.py
+│   ├── run_workforce_dq.py
+│   └── generate_portfolio_outputs.py
 │
 ├── data/
-│ ├── raw/
-│ └── processed/
-│ ├── workforce.db
-│ ├── dq_audit_log.csv
-│ └── dq_sla_evaluation.csv
+│   ├── raw/
+│   └── processed/
+│       ├── workforce.db
+│       ├── dq_audit_log.csv
+│       └── dq_sla_evaluation.csv
 │
 ├── outputs/
-│ ├── audit_log_snapshot.png
-│ ├── sla_bar_chart.png
-│ ├── historical_trend.png
-│ └── dashboard_portfolio.html
+│   ├── audit_log_snapshot.png
+│   ├── sla_bar_chart.png
+│   ├── historical_trend.png
+│   └── dashboard_portfolio.html
 │
+├── requirements.txt
 └── README.md
+
 
 ```
 
@@ -152,7 +198,7 @@ All findings below are automatically derived from the most recent data quality e
 
 ---
 
-## Impact Assessment (Latest Run)
+## Impact Assessment 
 
 The following issues were evaluated not only by volume, but by
 their effect on reporting accuracy, compliance, and decision-making.
@@ -233,8 +279,20 @@ GROUP BY parent_department
 ORDER BY invalid_rows DESC;
 ```
 
-This revealed that invalid FTE values were concentrated in a small number of departments,
-suggesting upstream system or data entry issues rather than random noise
+### Interpretation
+
+Invalid FTE values are concentrated in a small number of departments,
+suggesting upstream system or data entry issues rather than random noise.
+
+Impact
+
+If consumed by downstream BI tools, these records would:
+
+inflate reported headcount,
+
+distort cost-per-employee metrics,
+
+mislead workforce capacity planning.
 
 ---
 Impact
