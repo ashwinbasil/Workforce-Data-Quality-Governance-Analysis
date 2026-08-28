@@ -359,7 +359,7 @@ All referenced outputs below are generated directly by code in this repository.
 ![Historical Trend](outputs/historical_trend.png)
 
 ### Interactive Dashboard
-![Dashboard Preview](docs/outputs/dashboard_preview.png)
+![Dashboard Preview](https://ashwinbasil.github.io/Workforce-Data-Quality-Governance-Analysis/)
 
 [Open Interactive Dashboard](https://ashwinbasil.github.io/Workforce-Data-Quality-Governance-Analysis/outputs/dashboard_portfolio.html)
 
