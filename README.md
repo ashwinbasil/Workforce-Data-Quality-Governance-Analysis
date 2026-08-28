@@ -361,7 +361,7 @@ All referenced outputs below are generated directly by code in this repository.
 ### Interactive Dashboard
 ![Dashboard Preview](docs/outputs/dashboard_preview.png)
 
-[Open Interactive Dashboard](https://ashwinbasil.github.io/Workforce-Data-Quality-Governance-Analysis/dashboard_portfolio.html)
+[Open Interactive Dashboard](https://ashwinbasil.github.io/Workforce-Data-Quality-Governance-Analysis/outputs/dashboard_portfolio.html)
 
 
 ---
