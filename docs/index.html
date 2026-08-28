@@ -1,12 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workforce Data Quality & Governance Analysis</title>
 
-<html>
-<head><title>Customer Data Quality Dashboard</title></head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 40px;
+            background: #111827;
+            color: #f9fafb;
+        }
+
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            margin-top: 45px;
+        }
+
+        .subtitle {
+            color: #cbd5e1;
+            margin-bottom: 40px;
+        }
+
+        .chart {
+            width: 100%;
+            max-width: 1000px;
+            background: white;
+            padding: 10px;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .dashboard-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 18px;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+
+        .dashboard-link:hover {
+            background: #1d4ed8;
+        }
+    </style>
+</head>
+
 <body>
-<h2>Audit Log Snapshot</h2>
-<img src="outputs/audit_log_snapshot.png" width="600"><br>
-<h2>SLA Violation Chart</h2>
-<img src="outputs/sla_bar_chart.png" width="600"><br>
-<h2>Historical Trend</h2>
-<img src="outputs/historical_trend.png" width="600"><br>
+
+    <h1>Workforce Data Quality & Governance Analysis</h1>
+
+    <p class="subtitle">
+        UK Government Workforce Dataset | SQL Data Quality | SLA Monitoring | Governance
+    </p>
+
+    <h2>Audit Log Snapshot</h2>
+
+    <div class="chart">
+        <img
+            src="outputs/audit_log_snapshot.png"
+            alt="Audit log snapshot">
+    </div>
+
+    <h2>SLA Violation Chart</h2>
+
+    <div class="chart">
+        <img
+            src="outputs/sla_bar_chart.png"
+            alt="SLA violation chart">
+    </div>
+
+    <h2>Historical Trend</h2>
+
+    <div class="chart">
+        <img
+            src="outputs/historical_trend.png"
+            alt="Historical data quality trend">
+    </div>
+
+    <h2>Interactive Dashboard</h2>
+
+    <p>
+        Explore the interactive dashboard generated from the workforce
+        data quality pipeline.
+    </p>
+
+    <a
+        class="dashboard-link"
+        href="outputs/dashboard_portfolio.html">
+        Open Interactive Dashboard
+    </a>
+
 </body>
 </html>
