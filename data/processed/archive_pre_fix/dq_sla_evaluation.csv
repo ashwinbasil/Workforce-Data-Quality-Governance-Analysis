@@ -1,0 +1,5 @@
+check_name,failed_rows,max_failed_rows,severity,sla_status,check_timestamp
+inconsistent_region_casing,33,0,MEDIUM,FAIL,2026-08-30T04:16:59.950777+00:00
+senior_role_low_pay,24,2,MEDIUM,FAIL,2026-08-30T04:16:59.950777+00:00
+placeholder_office_region,119,50,LOW,FAIL,2026-08-30T04:16:59.950777+00:00
+invalid_fte_outlier_by_grade,62,15,HIGH,FAIL,2026-08-30T04:16:59.950777+00:00
