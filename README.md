@@ -18,6 +18,22 @@ All SQL and Python code is **public, versioned, and reproducible**.
 
 ---
 
+## Power BI Dashboard
+
+Interactive report: **[powerbi/Workforce_Data_Quality___Governance.pbix](powerbi/Workforce_Data_Quality___Governance.pbix)**
+
+![Power BI Dashboard Overview](outputs/powerbi_dashboard_overview.png)
+
+Built directly on the corrected pipeline output (`workforce_clean.csv`, `dq_failures.csv`, `dq_sla_evaluation.csv`). Includes:
+- 4 KPI cards (Total Records, Distinct Records With Any Failure, Failure Rate %, SLA Breaches)
+- Severity breakdown chart, sorted by failed row count
+- Region data quality visual (surfaces the casing and placeholder-value findings directly)
+- Drill-through detail tables for the two highest-confidence findings: FTE grade-relative outliers and senior role low pay
+
+GitHub can't render `.pbix` files inline, the link above downloads it. Open in Power BI Desktop (free) to interact with it directly.
+
+---
+
 ## SQL-First Architecture (Deliberate Design Choice)
 
 All data quality logic is implemented in **SQL**, not Python.
@@ -301,6 +317,9 @@ Screenshots and the dashboard below need to be regenerated from the corrected pi
 
 ### Interactive Dashboard
 [Dashboard](https://ashwinbasil.github.io/Workforce-Data-Quality-Governance-Analysis/)
+
+### Power BI Report
+[Download the full .pbix](powerbi/Workforce_Data_Quality___Governance.pbix) — see the "Power BI Dashboard" section near the top of this README for a screenshot and feature breakdown.
 
 ---
 
