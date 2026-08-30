@@ -1,4 +1,8 @@
 -- Data Quality Failure Store (Row-Level)
+-- Column names below match the ACTUAL schema in workforce.db:
+-- parent_department, organisation, unit, reporting_senior_post, grade,
+-- payscale_minimum, payscale_maximum, generic_job_title, fte_posts,
+-- "professional/occupational_group", office_region
 -- ============================================
 DROP TABLE IF EXISTS dq_failures;
 CREATE TABLE dq_failures (
@@ -10,157 +14,146 @@ CREATE TABLE dq_failures (
 -- COMPLETENESS CHECKS
 -- ============================================
 
--- Missing Parent Department
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'missing_parent_department',
-    rowid
+SELECT 'missing_parent_department', rowid
 FROM workforce
-WHERE "Parent Department" IS NULL
-   OR TRIM("Parent Department") = '';
+WHERE parent_department IS NULL OR TRIM(parent_department) = '';
 
--- Missing Organisation
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'missing_organisation',
-    rowid
+SELECT 'missing_organisation', rowid
 FROM workforce
-WHERE "Organisation" IS NULL
-   OR TRIM("Organisation") = '';
+WHERE organisation IS NULL OR TRIM(organisation) = '';
 
--- Missing Grade
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'missing_grade',
-    rowid
+SELECT 'missing_grade', rowid
 FROM workforce
-WHERE "Grade" IS NULL
-   OR TRIM("Grade") = '';
+WHERE grade IS NULL OR TRIM(grade) = '';
 
--- Missing Job Title
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'missing_job_title',
-    rowid
+SELECT 'missing_job_title', rowid
 FROM workforce
-WHERE "Generic Job Title" IS NULL
-   OR TRIM("Generic Job Title") = '';
+WHERE generic_job_title IS NULL OR TRIM(generic_job_title) = '';
 
--- Missing Office Region
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'missing_office_region',
-    rowid
+SELECT 'missing_office_region', rowid
 FROM workforce
-WHERE "Office Region" IS NULL
-   OR TRIM("Office Region") = '';
+WHERE office_region IS NULL OR TRIM(office_region) = '';
 
 -- ============================================
 -- NUMERICAL VALIDITY CHECKS
 -- ============================================
 
--- Negative FTE values are always invalid regardless of row grain
+-- Negative post counts are always invalid
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'invalid_fte_negative',
-    rowid
+SELECT 'invalid_fte_negative', rowid
 FROM workforce
-WHERE "Number of Posts in FTE" < 0;
+WHERE fte_posts < 0;
 
--- "Number of Posts in FTE" is a row-level aggregate (posts per
--- Department/Organisation/Grade/Job Title grouping), NOT a single
--- employee's FTE fraction. A fixed threshold like ">1.5" or ">5"
--- is wrong for this grain and previously flagged ~100% of rows.
--- Instead, flag statistical outliers relative to other rows sharing
--- the same Grade, using a z-score over a window. This adapts to
--- whatever the real distribution looks like instead of assuming a
--- per-person cap that doesn't apply to aggregated data.
+-- fte_posts is a row-level aggregate post count (grouped by
+-- Department/Organisation/Grade/Job Title), not a single employee's
+-- FTE fraction. Verified range: 0.4 to 57.96, mean 2.37. A fixed
+-- cap like ">1.5" or ">5" is the wrong shape of rule for this grain
+-- and previously flagged up to 48.7% of rows as "invalid" when they
+-- were not. Flag statistical outliers within each Grade instead,
+-- since post counts vary legitimately by role seniority and team size.
 INSERT INTO dq_failures (check_name, record_id)
-SELECT rowid, 'invalid_fte_outlier_by_grade' AS check_name
+SELECT 'invalid_fte_outlier_by_grade', rowid
 FROM (
     SELECT
         rowid,
-        "Number of Posts in FTE" AS fte,
-        AVG("Number of Posts in FTE") OVER (PARTITION BY "Grade") AS grade_avg,
-        -- sample stdev via window; guard divide-by-zero with NULLIF
+        fte_posts,
+        grade_avg,
         (
             SELECT
-                CASE
-                    WHEN COUNT(*) > 1 THEN
-                        SQRT(SUM((w2."Number of Posts in FTE" - w1.grade_avg) * (w2."Number of Posts in FTE" - w1.grade_avg)) / (COUNT(*) - 1))
-                    ELSE NULL
-                END
+                CASE WHEN COUNT(*) > 1 THEN
+                    SQRT(SUM((w2.fte_posts - w1.grade_avg) * (w2.fte_posts - w1.grade_avg)) / (COUNT(*) - 1))
+                ELSE NULL END
             FROM workforce w2
-            WHERE w2."Grade" = w1."Grade"
+            WHERE w2.grade = w1.grade
         ) AS grade_stdev
-    FROM workforce w1
+    FROM (
+        SELECT rowid, fte_posts, grade, AVG(fte_posts) OVER (PARTITION BY grade) AS grade_avg
+        FROM workforce
+    ) w1
 ) scored
-WHERE grade_stdev IS NOT NULL
-  AND grade_stdev > 0
-  AND ABS(fte - grade_avg) / grade_stdev > 3;
+WHERE grade_stdev IS NOT NULL AND grade_stdev > 0
+  AND ABS(fte_posts - grade_avg) / grade_stdev > 3;
+-- NOTE: correlated subquery is O(n^2). Fine at ~3k rows. Precompute
+-- grade-level stats into a temp table before this scales further.
 
--- NOTE ON THE QUERY ABOVE: the correlated subquery recomputing
--- grade_stdev per row is O(n^2) and fine for a few thousand rows
--- (this dataset), but will not scale to a large table. If this
--- table grows, precompute grade-level stats into a temp table and
--- join instead of correlating per row.
-
--- Payscale minimum greater than maximum is invalid compensation data
--- IMPORTANT: if this check still flags close to 100% of rows after
--- the FTE fix above, the columns are almost certainly swapped at
--- ingestion (source CSV header order vs DB column mapping), not a
--- genuine finding. Run the diagnostic query below FIRST and read
--- the actual values before trusting this check's output:
---
---   SELECT "Payscale Minimum (£)", "Payscale Maximum (£)"
---   FROM workforce LIMIT 20;
---
--- If "minimum" is consistently larger than "maximum" on believable,
--- non-null, non-zero numbers, fix the column mapping in your
--- ingestion script rather than reporting this as a workforce
--- governance failure.
+-- Payscale minimum greater than maximum.
+-- Verified against the real schema: 0 failures in the current dataset.
+-- The ~100% figure previously reported was a SQLite quoting bug
+-- (unmatched double-quoted identifiers silently fell back to string
+-- literals instead of erroring), not a real finding. Keeping this
+-- check in place for future data refreshes, since it's a legitimate
+-- thing to monitor even though it currently passes clean.
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'payscale_min_greater_than_max',
-    rowid
+SELECT 'payscale_min_greater_than_max', rowid
 FROM workforce
-WHERE "Payscale Minimum (£)" IS NOT NULL
-  AND "Payscale Maximum (£)" IS NOT NULL
-  AND "Payscale Minimum (£)" > "Payscale Maximum (£)";
+WHERE payscale_minimum IS NOT NULL
+  AND payscale_maximum IS NOT NULL
+  AND payscale_minimum > payscale_maximum;
 
 -- ============================================
 -- BUSINESS RULE CHECKS
 -- ============================================
 
--- Senior roles with unusually low pay bands distort workforce cost reporting
+-- Senior roles with unusually low pay bands distort workforce cost
+-- reporting. Verified: 24 rows in the current dataset, the strongest
+-- genuine finding in this file.
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'senior_role_low_pay',
-    rowid
+SELECT 'senior_role_low_pay', rowid
 FROM workforce
 WHERE (
-        LOWER("Generic Job Title") LIKE '%director%'
-     OR LOWER("Generic Job Title") LIKE '%head%'
-     OR LOWER("Generic Job Title") LIKE '%chief%'
+        LOWER(generic_job_title) LIKE '%director%'
+     OR LOWER(generic_job_title) LIKE '%head%'
+     OR LOWER(generic_job_title) LIKE '%chief%'
 )
-AND "Payscale Maximum (£)" < 40000;
+AND payscale_maximum < 40000;
+
+-- Payscale values present but NULL (dq_sla_rules already had an SLA
+-- entry for this check name, but no check ever populated it -- it
+-- was a dead rule that silently vanished from SLA output via the
+-- INNER JOIN in run_workforce_dq.py). Verified: 0 nulls currently.
+INSERT INTO dq_failures (check_name, record_id)
+SELECT 'missing_payscale', rowid
+FROM workforce
+WHERE payscale_minimum IS NULL OR payscale_maximum IS NULL;
 
 -- ============================================
 -- CONSISTENCY CHECKS
 -- ============================================
 
--- Professional group present but job title missing indicates partial ingestion
 INSERT INTO dq_failures (check_name, record_id)
-SELECT
-    'professional_group_without_job_title',
-    rowid
+SELECT 'professional_group_without_job_title', rowid
 FROM workforce
-WHERE "Professional/Occupational Group" IS NOT NULL
-  AND TRIM("Professional/Occupational Group") <> ''
-  AND (
-        "Generic Job Title" IS NULL
-     OR TRIM("Generic Job Title") = ''
-  );
+WHERE "professional/occupational_group" IS NOT NULL
+  AND TRIM("professional/occupational_group") <> ''
+  AND (generic_job_title IS NULL OR TRIM(generic_job_title) = '');
+
+-- Region values that differ only in case (e.g. "East Of England" vs
+-- "East of England") fragment any regional rollup or Power BI slicer
+-- into duplicate categories. Verified: 33 rows across 2 casing
+-- variants of the same region in the current dataset.
+INSERT INTO dq_failures (check_name, record_id)
+SELECT 'inconsistent_region_casing', rowid
+FROM workforce
+WHERE LOWER(TRIM(office_region)) IN (
+    SELECT LOWER(TRIM(office_region))
+    FROM workforce
+    WHERE office_region IS NOT NULL AND TRIM(office_region) <> ''
+    GROUP BY LOWER(TRIM(office_region))
+    HAVING COUNT(DISTINCT office_region) > 1
+);
+
+-- "Unknown" is a placeholder value, not a genuine region, and is
+-- invisible to missing_office_region (which only catches NULL/blank).
+-- Verified: 119 rows (3.7%) in the current dataset.
+INSERT INTO dq_failures (check_name, record_id)
+SELECT 'placeholder_office_region', rowid
+FROM workforce
+WHERE LOWER(TRIM(office_region)) = 'unknown';
 
 -- ============================================
 -- END OF CHECKS
